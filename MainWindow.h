@@ -1,11 +1,14 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QCloseEvent>
 #include <QDateTime>
 #include <QDebug>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QLabel>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QProcess>
 #include <QShortcut>
 #include <QTextDocument>
@@ -28,6 +31,9 @@ public:
     QString DumpFile;
     QDir appDir;
     QFile *fDump;
+    QLabel *lblBookmarks;
+    QLabel *lblDirty;
+    bool dirty = false;
     typedef struct Bookmark
     {
         QString title;
@@ -36,8 +42,10 @@ public:
     };
     QVector<Bookmark> bookmarks;
     int currentBookmarkIndex;
+    void closeEvent(QCloseEvent *event);
 
 private slots:
+    void slotDoExit();
     void on_btnLoadFile_clicked();
     void on_btnSave_clicked();
     void on_btnSaveBookmark_clicked();
@@ -54,7 +62,13 @@ private slots:
 
     void on_txtIndent_textChanged(const QString &arg1);
 
-    void on_treeWidget_itemSelectionChanged();
+    void on_action_Save_triggered();
+
+    void on_action_Quit_triggered();
+
+    void on_action_Open_triggered();
+
+    void on_txtTitle_editingFinished();
 
 private:
     Ui::MainWindow *ui;

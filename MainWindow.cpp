@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnUpBookmark->setEnabled(false);
     ui->btnDownBookmark->setEnabled(false);
     ui->btnSave->setEnabled(false);
+    ui->action_Save->setEnabled(false);
+    connect(ui->action_Quit, SIGNAL(triggered()), this, SLOT(slotDoExit()));
     //
     ui->btnSaveBookmark->setShortcut(QKeySequence("F2"));
     ui->btnSaveBookmark->setStatusTip("F2 : Update bookmark");
@@ -40,6 +42,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->btnInsertBookmark->setStatusTip("F3 : Insert bookmark");
     ui->btnDeleteBookmark->setShortcut(QKeySequence("F8"));
     ui->btnDeleteBookmark->setStatusTip("F8 : Delete bookmark");
+    //
+    this->lblDirty = new QLabel();
+    this->lblDirty->setIndent(10);
+    ui->statusbar->addPermanentWidget(this->lblDirty);
+    this->lblBookmarks = new QLabel("0 bookmark(s)");
+    this->lblBookmarks->setIndent(10);
+    ui->statusbar->addPermanentWidget(this->lblBookmarks);
+    //
     showMessage("Welcome");
 }
 
@@ -68,6 +78,8 @@ void MainWindow::on_btnLoadFile_clicked()
         QDesktopServices::openUrl(QUrl::fromLocalFile(this->PDFFile));
         showMessage(this->PDFFile + " open");
         ui->btnSave->setEnabled(true);
+        ui->action_Save->setEnabled(true);
+        this->dirty = false;
     }
 }
 
@@ -84,6 +96,7 @@ void MainWindow::on_btnSave_clicked()
 // ****************************************************************************
 void MainWindow::on_btnSaveBookmark_clicked()
 {
+    this->dirty = true;
     if (this->currentBookmarkIndex != NOTHING) {
         this->bookmarks[this->currentBookmarkIndex].title = ui->txtBookmark->text();
         this->bookmarks[this->currentBookmarkIndex].page = ui->txtPage->text().toInt();
@@ -98,7 +111,7 @@ void MainWindow::on_btnSaveBookmark_clicked()
         this->bookmarks.append(bm);
         this->RefreshBookmarks();
         showMessage("Bookmark added");
-    }
+    }    
 }
 
 // ****************************************************************************
@@ -157,7 +170,7 @@ void MainWindow::GetBookmarks(QString fPDF)
 
     ui->txtTitle->setText(GetInfoValue(fDump, "Title"));
     ui->lblPages->setText(GetVariable(fDump, "NumberOfPages"));
-    ui->lblBookmarks->setText(QString::number(GetAllBookmarks(fDump)) + " bookmark(s)");
+    this->lblBookmarks->setText(QString::number(GetAllBookmarks(fDump)) + " bookmark(s)");
 
     ui->treeWidget->setColumnCount(3);
     QStringList headerLabels;
@@ -197,7 +210,13 @@ int MainWindow::RefreshBookmarks()
             }
         }
     }
-    ui->lblBookmarks->setText(QString::number(this->bookmarks.size()) + " bookmark(s)");
+    this->lblBookmarks->setText(QString::number(this->bookmarks.size()) + " bookmark(s)");
+    if (this->dirty) {
+        this->lblDirty->setText("*modified*");
+    } else {
+        this->lblDirty->setText("");
+    }
+
     return this->bookmarks.size();
 }
 
@@ -347,6 +366,8 @@ void MainWindow::SaveBookmarks()
     myProcess->execute("pdftk", args);
     QDesktopServices::openUrl(QUrl::fromLocalFile(outFile));
     showMessage(outFile + " created");
+    this->dirty = false;
+    this->RefreshBookmarks();
 }
 
 // ****************************************************************************
@@ -493,25 +514,64 @@ void MainWindow::on_txtIndent_textChanged(const QString &arg1)
 }
 
 // ****************************************************************************
-// MainWindow::on_treeWidget_itemSelectionChanged()
+// MainWindow::on_action_Save_triggered()
 // ****************************************************************************
-void MainWindow::on_treeWidget_itemSelectionChanged()
+void MainWindow::on_action_Save_triggered()
 {
-    /*
-    qDebug() << "ITEM_SELECTION_CHANGED";
-    this->currentBookmarkIndex = ui->treeWidget->currentIndex().row();
-    QTreeWidgetItem *item = ui->treeWidget->currentItem();
-    ui->txtBookmark->setText(item->text(2));
-    ui->txtIndent->setText(item->text(1));
-    ui->txtPage->setText(item->text(0));
+    this->SaveBookmarks();
+}
 
-    ui->btnUpBookmark->setEnabled(true);
-    ui->btnDownBookmark->setEnabled(true);
-    if (this->currentBookmarkIndex == 0) {
-        ui->btnUpBookmark->setEnabled(false);
+// ****************************************************************************
+// MainWindow::on_action_Quit_triggered()
+// ****************************************************************************
+void MainWindow::on_action_Quit_triggered() {}
+
+// ****************************************************************************
+// MainWindow::on_action_Open_triggered()
+// ****************************************************************************
+void MainWindow::on_action_Open_triggered()
+{
+    this->on_btnLoadFile_clicked();
+}
+
+// *****************************************************************************
+// MainWindow::slotDoExit()
+// *****************************************************************************
+void MainWindow::slotDoExit()
+{
+    this->close();
+}
+
+// *****************************************************************************
+// MainWindow::closeEvent()
+// *****************************************************************************
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (this->dirty) {
+        QMessageBox::StandardButton rc;
+        rc = QMessageBox::question(
+            this,
+            APP_NAME,
+            QString("Table Of Contents has been modified.\nDo you want to save it ?\n"),
+            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        if (rc == QMessageBox::Cancel) {
+            showMessage("Cancel exit");
+            event->ignore();
+        } else {
+            if (rc == QMessageBox::Yes) {
+                this->SaveBookmarks();
+                showMessage("Exiting");
+                event->accept();
+            }
+        }
     }
-    if (this->currentBookmarkIndex == this->bookmarks.size() - 1) {
-        ui->btnDownBookmark->setEnabled(false);
-    }
-*/
+}
+
+// *****************************************************************************
+// MainWindow::on_txtTitle_editingFinished()
+// *****************************************************************************
+void MainWindow::on_txtTitle_editingFinished()
+{
+    this->dirty = true;
+    this->RefreshBookmarks();
 }
