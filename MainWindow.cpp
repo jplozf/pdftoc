@@ -119,6 +119,7 @@ void MainWindow::on_btnSaveBookmark_clicked()
 // ****************************************************************************
 void MainWindow::on_btnUpBookmark_clicked()
 {
+    this->dirty = true;
     std::swap(this->bookmarks[this->currentBookmarkIndex - 1],
               this->bookmarks[this->currentBookmarkIndex]);
     this->currentBookmarkIndex--;
@@ -131,6 +132,7 @@ void MainWindow::on_btnUpBookmark_clicked()
 // ****************************************************************************
 void MainWindow::on_btnDownBookmark_clicked()
 {
+    this->dirty = true;
     std::swap(this->bookmarks[this->currentBookmarkIndex + 1],
               this->bookmarks[this->currentBookmarkIndex]);
     this->currentBookmarkIndex++;
@@ -144,6 +146,7 @@ void MainWindow::on_btnDownBookmark_clicked()
 void MainWindow::on_btnDeleteBookmark_clicked()
 {
     if (this->currentBookmarkIndex != NOTHING) {
+        this->dirty = true;
         this->bookmarks.remove(this->currentBookmarkIndex);
         if (this->currentBookmarkIndex > 0) {
             this->currentBookmarkIndex--;
@@ -441,6 +444,7 @@ void MainWindow::showMessage(const QString txt)
 void MainWindow::on_btnInsertBookmark_clicked()
 {
     Bookmark bm;
+    this->dirty = true;
     bm.title = ui->txtBookmark->text();
     bm.page = ui->txtPage->text().toInt();
     bm.level = ui->txtIndent->text().toInt();
