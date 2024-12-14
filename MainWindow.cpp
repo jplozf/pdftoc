@@ -183,7 +183,7 @@ void MainWindow::GetBookmarks(QString fPDF)
     headerLabels.push_back("Level");
     headerLabels.push_back("Title");
     ui->treeWidget->setHeaderLabels(headerLabels);
-    this->currentBookmarkIndex = 0;
+    // this->currentBookmarkIndex = 0;
     this->RefreshBookmarks();
 
     this->fDump->close();
@@ -412,18 +412,25 @@ void MainWindow::UpdateDumpFile()
 void MainWindow::UpdateTitle()
 {
     QString s = "";
+    bool found = false;
     QFile file = this->appDir.filePath(DUMP_TEMP_FILE);
     if (file.open(QIODevice::ReadWrite | QIODevice::Text)) {
         QTextStream dumpText(&file);
         while (!dumpText.atEnd()) {
             QString line = dumpText.readLine();
             if (line.contains("InfoKey: Title")) {
+                found = true;
                 s += line + "\n";
                 s += "InfoValue: " + ui->txtTitle->text().trimmed() + "\n";
                 line = dumpText.readLine(); // dummy read to skip the next line
             } else {
                 s += line + "\n";
             }
+        }
+        if (!found) {
+            s += "InfoBegin\n";
+            s += "InfoKey: Title\n";
+            s += "InfoValue: " + ui->txtTitle->text().trimmed() + "\n";
         }
         // qDebug() << s;
         file.resize(0);
@@ -450,8 +457,13 @@ void MainWindow::on_btnInsertBookmark_clicked()
     bm.title = ui->txtBookmark->text();
     bm.page = ui->txtPage->text().toInt();
     bm.level = ui->txtIndent->text().toInt();
-    this->bookmarks.insert(this->currentBookmarkIndex + 1, bm);
-    this->currentBookmarkIndex++;
+    if (this->currentBookmarkIndex == NOTHING) {
+        this->bookmarks.insert(0, bm);
+        this->currentBookmarkIndex = 0;
+    } else {
+        this->bookmarks.insert(this->currentBookmarkIndex + 1, bm);
+        this->currentBookmarkIndex++;
+    }
     this->RefreshBookmarks();
     ui->txtBookmark->selectAll();
     ui->txtBookmark->setFocus();
