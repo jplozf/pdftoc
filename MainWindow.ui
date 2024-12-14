@@ -26,6 +26,21 @@
          <layout class="QHBoxLayout" name="horizontalLayout"/>
         </item>
         <item>
+         <widget class="QLabel" name="label_11">
+          <property name="font">
+           <font>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Table Of Contents</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QTreeWidget" name="treeWidget">
           <column>
            <property name="text">

@@ -111,7 +111,9 @@ void MainWindow::on_btnSaveBookmark_clicked()
         this->bookmarks.append(bm);
         this->RefreshBookmarks();
         showMessage("Bookmark added");
-    }    
+    }
+    ui->txtBookmark->selectAll();
+    ui->txtBookmark->setFocus();
 }
 
 // ****************************************************************************
@@ -451,6 +453,8 @@ void MainWindow::on_btnInsertBookmark_clicked()
     this->bookmarks.insert(this->currentBookmarkIndex + 1, bm);
     this->currentBookmarkIndex++;
     this->RefreshBookmarks();
+    ui->txtBookmark->selectAll();
+    ui->txtBookmark->setFocus();
 }
 
 // ****************************************************************************
