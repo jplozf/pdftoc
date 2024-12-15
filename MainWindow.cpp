@@ -74,12 +74,13 @@ void MainWindow::on_btnLoadFile_clicked()
     if (this->PDFFile != "") {
         ui->txtFileName->setText(this->PDFFile);
         this->bookmarks.clear();
-        this->GetBookmarks(this->PDFFile);
-        QDesktopServices::openUrl(QUrl::fromLocalFile(this->PDFFile));
-        showMessage(this->PDFFile + " open");
-        ui->btnSave->setEnabled(true);
-        ui->action_Save->setEnabled(true);
-        this->dirty = false;
+        if (this->GetBookmarks(this->PDFFile) == 0) {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(this->PDFFile));
+            showMessage(this->PDFFile + " open");
+            ui->btnSave->setEnabled(true);
+            ui->action_Save->setEnabled(true);
+            this->dirty = false;
+        }
     }
 }
 
@@ -163,30 +164,39 @@ void MainWindow::on_btnDeleteBookmark_clicked()
 // ****************************************************************************
 // MainWindow::GetBookmarks()
 // ****************************************************************************
-void MainWindow::GetBookmarks(QString fPDF)
+int MainWindow::GetBookmarks(QString fPDF)
 {
     QProcess *myProcess = new QProcess(this);
     QStringList args = {fPDF, "dump_data", "output", this->DumpFile};
     qDebug() << args;
-    myProcess->execute("pdftk", args);
-    //
-    this->fDump = new QFile(this->DumpFile);
-    this->fDump->open(QIODevice::ReadOnly);
+    int rc = myProcess->execute("pdftk", args);
+    if (rc == 0) {
+        this->fDump = new QFile(this->DumpFile);
+        this->fDump->open(QIODevice::ReadOnly);
 
-    ui->txtTitle->setText(GetInfoValue(fDump, "Title"));
-    ui->lblPages->setText(GetVariable(fDump, "NumberOfPages"));
-    this->lblBookmarks->setText(QString::number(GetAllBookmarks(fDump)) + " bookmark(s)");
+        ui->txtTitle->setText(GetInfoValue(fDump, "Title"));
+        ui->lblPages->setText(GetVariable(fDump, "NumberOfPages"));
+        this->lblBookmarks->setText(QString::number(GetAllBookmarks(fDump)) + " bookmark(s)");
 
-    ui->treeWidget->setColumnCount(3);
-    QStringList headerLabels;
-    headerLabels.push_back("Page");
-    headerLabels.push_back("Level");
-    headerLabels.push_back("Title");
-    ui->treeWidget->setHeaderLabels(headerLabels);
-    // this->currentBookmarkIndex = 0;
-    this->RefreshBookmarks();
+        ui->treeWidget->setColumnCount(3);
+        QStringList headerLabels;
+        headerLabels.push_back("Page");
+        headerLabels.push_back("Level");
+        headerLabels.push_back("Title");
+        ui->treeWidget->setHeaderLabels(headerLabels);
+        // this->currentBookmarkIndex = 0;
+        this->RefreshBookmarks();
 
-    this->fDump->close();
+        this->fDump->close();
+    } else {
+        QMessageBox::critical(this,
+                              APP_NAME,
+                              tr("Can't parse the PDF file"),
+                              QMessageBox::Ok,
+                              QMessageBox::Ok);
+        this->showMessage("Error : Can't parse the PDF file");
+    }
+    return rc;
 }
 
 // ****************************************************************************

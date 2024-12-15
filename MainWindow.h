@@ -72,7 +72,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    void GetBookmarks(QString fPDf);
+    int GetBookmarks(QString fPDf);
     QString GetVariable(QFile *fDump, QString var);
     QString GetInfoValue(QFile *fDump, QString key);
     int GetAllBookmarks(QFile *fDump);
