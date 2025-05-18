@@ -51,6 +51,21 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusbar->addPermanentWidget(this->lblBookmarks);
     //
     showMessage("Welcome");
+    if (QCoreApplication::arguments().count() >= 2) {
+        QString arg = QCoreApplication::arguments().at(1);
+        if (arg != "") {
+            this->PDFFile = QFileInfo(arg).canonicalFilePath();
+            ui->txtFileName->setText(this->PDFFile);
+            this->bookmarks.clear();
+            if (this->GetBookmarks(this->PDFFile) == 0) {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(this->PDFFile));
+                showMessage(this->PDFFile + " open");
+                ui->btnSave->setEnabled(true);
+                ui->action_Save->setEnabled(true);
+                this->dirty = false;
+            }
+        }
+    }
 }
 
 // ****************************************************************************
